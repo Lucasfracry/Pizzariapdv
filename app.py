@@ -1,85 +1,26 @@
-from flask import Flask, render_template, request, jsonify
-import sqlite3
+import webview
+import os
+import sys
 
-app = Flask(__name__)
+# Esta função é vital para que o executável encontre o arquivo index.html
+def resource_path(relative_path):
+    try:
+        # Quando vira EXE, o PyInstaller cria uma pasta temporária (_MEIPASS)
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
-def conectar():
-    return sqlite3.connect("pizzas.db")
+# Aqui o código busca especificamente o nome "index.html"
+html_path = resource_path("index.html")
 
-def criar():
-    conn = conectar()
-    c = conn.cursor()
+window = webview.create_window(
+    'BARRA FUNDA PIZZA E VINHO - PDV',
+    html_path,
+    width=1300,
+    height=850,
+    resizable=True
+)
 
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS pizzas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        numero INTEGER,
-        nome TEXT,
-        tamanho TEXT,
-        preco REAL
-    )
-    """)
-
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS bordas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT,
-        preco REAL
-    )
-    """)
-
-    conn.commit()
-    conn.close()
-
-criar()
-
-@app.route('/')
-def index():
-    conn = conectar()
-    c = conn.cursor()
-
-    c.execute("SELECT * FROM pizzas ORDER BY numero")
-    pizzas = c.fetchall()
-
-    c.execute("SELECT * FROM bordas")
-    bordas = c.fetchall()
-
-    conn.close()
-
-    return render_template("index.html", pizzas=pizzas, bordas=bordas)
-
-
-@app.route('/salvar_pizza', methods=['POST'])
-def salvar_pizza():
-    conn = conectar()
-    c = conn.cursor()
-
-    c.execute("INSERT INTO pizzas (numero, nome, tamanho, preco) VALUES (?, ?, ?, ?)",
-              (request.form['numero'], request.form['nome'], request.form['tamanho'], request.form['preco']))
-
-    conn.commit()
-    conn.close()
-    return "ok"
-
-
-@app.route('/salvar_borda', methods=['POST'])
-def salvar_borda():
-    conn = conectar()
-    c = conn.cursor()
-
-    c.execute("INSERT INTO bordas (nome, preco) VALUES (?, ?)",
-              (request.form['nome'], request.form['preco']))
-
-    conn.commit()
-    conn.close()
-    return "ok"
-
-
-@app.route('/finalizar', methods=['POST'])
-def finalizar():
-    print("\nPEDIDO:", request.json)
-    return jsonify({"ok": True})
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    webview.start()
