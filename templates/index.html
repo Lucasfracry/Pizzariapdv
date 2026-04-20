@@ -1,234 +1,258 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-<title>Pizzaria</title>
-<link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDV Pizzaria Completo</title>
+    <style>
+        :root { --primary: #e74c3c; --secondary: #27ae60; --dark: #2c3e50; --blue: #3498db; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; }
+        .container { display: flex; gap: 15px; max-width: 1300px; margin: auto; height: 95vh; }
+        
+        /* Painéis */
+        .card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .admin-panel { flex: 0 0 280px; overflow-y: auto; }
+        .menu-panel { flex: 1; overflow-y: auto; }
+        .cart-panel { flex: 0 0 320px; background: #fff; border-left: 5px solid var(--primary); }
+
+        h2 { font-size: 1.2rem; color: var(--dark); border-bottom: 2px solid var(--primary); margin: 0 0 10px 0; padding-bottom: 5px; }
+        h3 { font-size: 1rem; margin: 15px 0 5px 0; color: var(--primary); }
+
+        /* Formulários */
+        input, select, textarea { width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .btn-acao { cursor: pointer; border: none; border-radius: 4px; font-weight: bold; padding: 10px; width: 100%; transition: 0.2s; }
+        .btn-cadastrar { background: var(--dark); color: white; }
+        
+        /* Itens do Cardápio */
+        .grid-itens { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+        .btn-item { 
+            background: white; border: 1px solid #ddd; padding: 10px; border-radius: 6px; cursor: pointer; text-align: center;
+            display: flex; flex-direction: column; justify-content: center; min-height: 80px;
+        }
+        .btn-item:hover { border-color: var(--secondary); background: #f9fff9; }
+        .numero-badge { background: var(--dark); color: white; font-size: 0.7rem; padding: 2px 5px; border-radius: 3px; width: fit-content; margin-bottom: 4px; }
+
+        /* Modal */
+        #modal-opcoes { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 350px; }
+
+        /* Carrinho */
+        .item-cart { border-bottom: 1px solid #eee; padding: 8px 0; font-size: 0.9rem; position: relative; }
+        .btn-del { color: red; cursor: pointer; float: right; border: none; background: none; font-weight: bold; }
+        .total-box { font-size: 1.4rem; font-weight: bold; margin-top: auto; padding-top: 10px; border-top: 2px solid #eee; text-align: right; }
+
+        @media print {
+            body * { display: none; }
+            #cupom { display: block; width: 80mm; font-family: monospace; }
+        }
+    </style>
 </head>
 <body>
 
-<div class="header">🍕 Sistema de Pizzaria</div>
+<div class="container">
+    <div class="card admin-panel">
+        <h2>📦 Cadastro</h2>
+        <input type="number" id="cad-num" placeholder="Nº no Cardápio">
+        <input type="text" id="cad-nome" placeholder="Nome do Item">
+        <select id="cad-cat" onchange="togglePrecos()">
+            <option value="pizza">Pizza</option>
+            <option value="borda">Borda Recheada</option>
+            <option value="bebida">Refrigerante/Bebida</option>
+            <option value="outros">Outros</option>
+        </select>
+        
+        <div id="precos-pizza">
+            <input type="number" id="cad-G" placeholder="Preço Grande (R$)">
+            <input type="number" id="cad-B" placeholder="Preço Broto (R$)">
+        </div>
+        <div id="preco-unico" style="display:none;">
+            <input type="number" id="cad-U" placeholder="Preço Unitário (R$)">
+        </div>
+        
+        <button class="btn-acao btn-cadastrar" onclick="salvarItem()">Salvar no Sistema</button>
+        
+        <div id="lista-cadastrados" style="margin-top:20px; font-size: 0.8rem;">
+            <h3>Itens Ativos</h3>
+            <div id="itens-admin"></div>
+        </div>
+    </div>
 
-<div class="tabs">
-<div class="tab active" onclick="trocar('pedido', this)">Pedido</div>
-<div class="tab" onclick="trocar('cadastro', this)">Cadastro</div>
+    <div class="card menu-panel">
+        <h2>🍕 Cardápio de Vendas</h2>
+        
+        <h3>Pizzas</h3>
+        <div id="menu-pizzas" class="grid-itens"></div>
+        
+        <h3>Bebidas</h3>
+        <div id="menu-bebidas" class="grid-itens"></div>
+        
+        <h3>Outros</h3>
+        <div id="menu-outros" class="grid-itens"></div>
+    </div>
+
+    <div class="card cart-panel">
+        <h2>🛒 Pedido</h2>
+        <div id="carrinho-lista" style="overflow-y:auto; flex-grow:1;"></div>
+        <div class="total-box" id="total-val">R$ 0,00</div>
+        <button class="btn-acao" style="background:var(--blue); color:white; margin-top:10px;" onclick="imprimir()">🖨️ Imprimir (80mm)</button>
+        <button class="btn-acao" style="background:#bdc3c7; color:white; margin-top:5px;" onclick="limparTudo()">Limpar Tudo</button>
+    </div>
 </div>
 
-<!-- ================= PEDIDO ================= -->
-<div id="pedido" class="content show">
-
-<div class="card">
-<h3>Tamanho</h3>
-<button onclick="setTamanho('Broto')">Broto</button>
-<button onclick="setTamanho('Grande')">Grande</button>
+<div id="modal-opcoes">
+    <div class="modal-content">
+        <h2 id="m-titulo">Pizza</h2>
+        <label>Tamanho:</label>
+        <select id="m-tam">
+            <option value="G">Grande</option>
+            <option value="B">Broto</option>
+        </select>
+        <label>Borda:</label>
+        <select id="m-borda"></select>
+        <label>Observação:</label>
+        <textarea id="m-obs" rows="2"></textarea>
+        <button class="btn-acao" style="background:var(--secondary); color:white" onclick="adicionarPizzaAoCarrinho()">Adicionar ao Pedido</button>
+        <button onclick="fecharModal()" style="background:none; border:none; width:100%; margin-top:10px; cursor:pointer;">Voltar</button>
+    </div>
 </div>
 
-<div class="card">
-<h3>Sabores</h3>
-{% for pizza in pizzas %}
-<button class="pizza-btn"
-onclick="addSabor('{{pizza[2]}}', {{pizza[4]}}, '{{pizza[3]}}')">
-#{{pizza[1]}} - {{pizza[2]}} ({{pizza[3]}})
-</button>
-{% endfor %}
-</div>
-
-<div class="card">
-<h3>Bordas</h3>
-{% for b in bordas %}
-<button onclick="setBorda('{{b[1]}}', {{b[2]}})">
-{{b[1]}} + R$ {{b[2]}}
-</button>
-{% endfor %}
-</div>
-
-<div class="card">
-<h3>Resumo do Pedido</h3>
-<div id="resumo"></div>
-<p id="total"></p>
-<button class="finalizar" onclick="finalizar()">FINALIZAR</button>
-</div>
-
-</div>
-
-<!-- ================= CADASTRO ================= -->
-<div id="cadastro" class="content">
-
-<div class="card">
-<h3>Nova Pizza</h3>
-
-<input id="num" placeholder="Número">
-<input id="nome" placeholder="Nome">
-
-<select id="tam">
-<option value="Broto">Broto</option>
-<option value="Grande">Grande</option>
-</select>
-
-<input id="preco" type="number" placeholder="Preço">
-
-<button onclick="salvarPizza()">Salvar Pizza</button>
-
-</div>
-
-<div class="card">
-<h3>Nova Borda</h3>
-
-<input id="bnome" placeholder="Nome">
-<input id="bpreco" type="number" placeholder="Preço">
-
-<button onclick="salvarBorda()">Salvar Borda</button>
-
-</div>
-
-</div>
+<div id="cupom" style="display:none;"></div>
 
 <script>
+    let db = JSON.parse(localStorage.getItem('pizzaria_db')) || { itens: [] };
+    let carrinho = [];
+    let itemSelecionado = null;
 
-// ================= TABS =================
-function trocar(id, el){
-    document.querySelectorAll('.content').forEach(c=>c.classList.remove('show'))
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'))
-
-    document.getElementById(id).classList.add('show')
-    el.classList.add('active')
-}
-
-// ================= PEDIDO =================
-let pedido = {
-    tamanho:"",
-    tipo:"",
-    sabores:[],
-    precos:[],
-    borda:"",
-    precoBorda:0
-}
-
-// DEFINE TAMANHO
-function setTamanho(t){
-    pedido.tamanho = t
-    pedido.sabores = []
-    pedido.precos = []
-    pedido.tipo = ""
-    atualizar()
-}
-
-// ADICIONAR SABOR (🔥 CORRIGIDO)
-function addSabor(nome, preco, tamanho){
-
-    // define tamanho automático
-    if(pedido.tamanho == ""){
-        pedido.tamanho = tamanho
+    function togglePrecos() {
+        const cat = document.getElementById('cad-cat').value;
+        document.getElementById('precos-pizza').style.display = (cat === 'pizza') ? 'block' : 'none';
+        document.getElementById('preco-unico').style.display = (cat !== 'pizza') ? 'block' : 'none';
     }
 
-    // valida tamanho
-    if(tamanho != pedido.tamanho){
-        alert("Escolha pizzas do mesmo tamanho")
-        return
+    function salvarItem() {
+        const num = document.getElementById('cad-num').value;
+        const nome = document.getElementById('cad-nome').value;
+        const cat = document.getElementById('cad-cat').value;
+        
+        if(!num || !nome) return alert("Preencha Número e Nome!");
+
+        let novo = { id: Date.now(), num, nome, cat };
+        if(cat === 'pizza') {
+            novo.pg = parseFloat(document.getElementById('cad-G').value) || 0;
+            novo.pb = parseFloat(document.getElementById('cad-B').value) || 0;
+        } else {
+            novo.pu = parseFloat(document.getElementById('cad-U').value) || 0;
+        }
+
+        db.itens.push(novo);
+        localStorage.setItem('pizzaria_db', JSON.stringify(db));
+        atualizarInterface();
     }
 
-    // PRIMEIRO SABOR
-    if(pedido.sabores.length == 0){
-        pedido.sabores = [nome]
-        pedido.precos = [preco]
-        pedido.tipo = "Inteira"
+    function removerDoDb(id) {
+        db.itens = db.itens.filter(i => i.id !== id);
+        localStorage.setItem('pizzaria_db', JSON.stringify(db));
+        atualizarInterface();
     }
 
-    // SEGUNDO SABOR
-    else if(pedido.sabores.length == 1){
-        pedido.sabores.push(nome)
-        pedido.precos.push(preco)
-        pedido.tipo = "Meia-Meia"
+    function abrirOpcoes(id) {
+        itemSelecionado = db.itens.find(i => i.id === id);
+        if(itemSelecionado.cat === 'pizza') {
+            document.getElementById('m-titulo').innerText = itemSelecionado.nome;
+            const selectBorda = document.getElementById('m-borda');
+            selectBorda.innerHTML = '<option value="0">Sem Borda</option>';
+            db.itens.filter(i => i.cat === 'borda').forEach(b => {
+                selectBorda.innerHTML += `<option value="${b.pu}">${b.nome} (+R$${b.pu})</option>`;
+            });
+            document.getElementById('modal-opcoes').style.display = 'flex';
+        } else {
+            adicionarDireto(itemSelecionado);
+        }
     }
 
-    else{
-        alert("Máximo 2 sabores")
-        return
+    function adicionarPizzaAoCarrinho() {
+        const tam = document.getElementById('m-tam').value;
+        const bSel = document.getElementById('m-borda');
+        const precoBorda = parseFloat(bSel.value);
+        const precoBase = (tam === 'G') ? itemSelecionado.pg : itemSelecionado.pb;
+
+        carrinho.push({
+            id: Date.now(),
+            nome: `${itemSelecionado.nome} (${tam === 'G' ? 'Grande' : 'Broto'})`,
+            extra: precoBorda > 0 ? `Borda: ${bSel.options[bSel.selectedIndex].text.split(' (+')[0]}` : '',
+            obs: document.getElementById('m-obs').value,
+            total: precoBase + precoBorda
+        });
+        fecharModal();
+        renderCart();
     }
 
-    atualizar()
-}
-
-// BORDA
-function setBorda(nome, preco){
-    pedido.borda = nome
-    pedido.precoBorda = preco
-    atualizar()
-}
-
-// TOTAL
-function calcular(){
-    let total = 0
-
-    if(pedido.tipo == "Inteira"){
-        total = pedido.precos[0] || 0
+    function adicionarDireto(item) {
+        carrinho.push({ id: Date.now(), nome: item.nome, total: item.pu, extra: '', obs: '' });
+        renderCart();
     }
 
-    if(pedido.tipo == "Meia-Meia"){
-        total = Math.max(...pedido.precos, 0)
+    function renderCart() {
+        const lista = document.getElementById('carrinho-lista');
+        lista.innerHTML = carrinho.map((i, idx) => `
+            <div class="item-cart">
+                <button class="btn-del" onclick="removerDoPedido(${idx})">X</button>
+                <strong>${i.nome}</strong><br>
+                ${i.extra ? `<small>${i.extra}</small><br>` : ''}
+                ${i.obs ? `<small>Obs: ${i.obs}</small><br>` : ''}
+                R$ ${i.total.toFixed(2)}
+            </div>
+        `).join('');
+        const total = carrinho.reduce((a, b) => a + b.total, 0);
+        document.getElementById('total-val').innerText = `R$ ${total.toFixed(2)}`;
     }
 
-    total += pedido.precoBorda
+    function removerDoPedido(index) {
+        carrinho.splice(index, 1);
+        renderCart();
+    }
 
-    return total
-}
+    function fecharModal() { document.getElementById('modal-opcoes').style.display = 'none'; }
 
-// ATUALIZAR UI
-function atualizar(){
+    function atualizarInterface() {
+        // Render Menu
+        const pMenu = document.getElementById('menu-pizzas');
+        const bMenu = document.getElementById('menu-bebidas');
+        const oMenu = document.getElementById('menu-outros');
+        const admin = document.getElementById('itens-admin');
 
-    let total = calcular()
+        pMenu.innerHTML = ''; bMenu.innerHTML = ''; oMenu.innerHTML = ''; admin.innerHTML = '';
 
-    let sabores = pedido.sabores.length
-        ? pedido.sabores.join(' / ')
-        : "-"
+        db.itens.sort((a,b) => a.num - b.num).forEach(i => {
+            const btn = `<button class="btn-item" onclick="abrirOpcoes(${i.id})">
+                <span class="numero-badge">Nº ${i.num}</span>
+                <strong>${i.nome}</strong>
+                <span>${i.cat === 'pizza' ? `R$${i.pg}` : `R$${i.pu}`}</span>
+            </button>`;
+            
+            if(i.cat === 'pizza') pMenu.innerHTML += btn;
+            else if(i.cat === 'bebida') bMenu.innerHTML += btn;
+            else if(i.cat === 'outros') oMenu.innerHTML += btn;
 
-    resumo.innerHTML = `
-    <div><strong>Tamanho:</strong> ${pedido.tamanho || "-"}</div>
-    <div><strong>Tipo:</strong> ${pedido.tipo || "-"}</div>
-    <div><strong>Sabores:</strong> ${sabores}</div>
-    <div><strong>Borda:</strong> ${pedido.borda || "-"}</div>
-    `
+            admin.innerHTML += `<div>${i.num} - ${i.nome} <span onclick="removerDoDb(${i.id})" style="color:red;cursor:pointer">[excluir]</span></div>`;
+        });
+    }
 
-    totalEl.innerText = "R$ " + total.toFixed(2)
-}
+    function imprimir() {
+        if(carrinho.length === 0) return;
+        const c = document.getElementById('cupom');
+        let h = `<div style="text-align:center"><strong>PIZZARIA PDV</strong><br>${new Date().toLocaleString()}<hr></div>`;
+        carrinho.forEach(i => {
+            h += `<div>${i.nome}<br>${i.extra} ${i.obs ? '<br>'+i.obs : ''}<br>R$ ${i.total.toFixed(2)}<hr></div>`;
+        });
+        h += `<div style="text-align:right"><strong>TOTAL: R$ ${carrinho.reduce((a,b)=>a+b.total,0).toFixed(2)}</strong></div><br>.`;
+        c.innerHTML = h;
+        window.print();
+    }
 
-// FINALIZAR
-function finalizar(){
+    function limparTudo() { if(confirm("Limpar pedido?")) { carrinho = []; renderCart(); } }
 
-    fetch('/finalizar',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({...pedido, total:calcular()})
-    })
-
-    alert("Pedido enviado!")
-
-    pedido = { tamanho:"", tipo:"", sabores:[], precos:[], borda:"", precoBorda:0 }
-    atualizar()
-}
-
-// ================= CADASTRO =================
-function salvarPizza(){
-    fetch('/salvar_pizza',{
-        method:'POST',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body:`numero=${num.value}&nome=${nome.value}&tamanho=${tam.value}&preco=${preco.value}`
-    })
-    alert("Pizza salva!")
-}
-
-function salvarBorda(){
-    fetch('/salvar_borda',{
-        method:'POST',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body:`nome=${bnome.value}&preco=${bpreco.value}`
-    })
-    alert("Borda salva!")
-}
-
-const resumo = document.getElementById("resumo")
-const totalEl = document.getElementById("total")
-
+    window.onload = atualizarInterface;
 </script>
-
 </body>
 </html>
