@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pizzaria</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="header">🍕 Sistema de Pizzaria</div>
+
+<div class="tabs">
+<div class="tab active" onclick="trocar('pedido', this)">Pedido</div>
+<div class="tab" onclick="trocar('cadastro', this)">Cadastro</div>
+</div>
+
+<!-- ================= PEDIDO ================= -->
+<div id="pedido" class="content show">
+
+<div class="card">
+<h3>Tamanho</h3>
+<button onclick="setTamanho('Broto')">Broto</button>
+<button onclick="setTamanho('Grande')">Grande</button>
+</div>
+
+<div class="card">
+<h3>Sabores</h3>
+{% for pizza in pizzas %}
+<button class="pizza-btn"
+onclick="addSabor('{{pizza[2]}}', {{pizza[4]}}, '{{pizza[3]}}')">
+#{{pizza[1]}} - {{pizza[2]}} ({{pizza[3]}})
+</button>
+{% endfor %}
+</div>
+
+<div class="card">
+<h3>Bordas</h3>
+{% for b in bordas %}
+<button onclick="setBorda('{{b[1]}}', {{b[2]}})">
+{{b[1]}} + R$ {{b[2]}}
+</button>
+{% endfor %}
+</div>
+
+<div class="card">
+<h3>Resumo do Pedido</h3>
+<div id="resumo"></div>
+<p id="total"></p>
+<button class="finalizar" onclick="finalizar()">FINALIZAR</button>
+</div>
+
+</div>
+
+<!-- ================= CADASTRO ================= -->
+<div id="cadastro" class="content">
+
+<div class="card">
+<h3>Nova Pizza</h3>
+
+<input id="num" placeholder="Número">
+<input id="nome" placeholder="Nome">
+
+<select id="tam">
+<option value="Broto">Broto</option>
+<option value="Grande">Grande</option>
+</select>
+
+<input id="preco" type="number" placeholder="Preço">
+
+<button onclick="salvarPizza()">Salvar Pizza</button>
+
+</div>
+
+<div class="card">
+<h3>Nova Borda</h3>
+
+<input id="bnome" placeholder="Nome">
+<input id="bpreco" type="number" placeholder="Preço">
+
+<button onclick="salvarBorda()">Salvar Borda</button>
+
+</div>
+
+</div>
+
+<script>
+
+// ================= TABS =================
+function trocar(id, el){
+    document.querySelectorAll('.content').forEach(c=>c.classList.remove('show'))
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'))
+
+    document.getElementById(id).classList.add('show')
+    el.classList.add('active')
+}
+
+// ================= PEDIDO =================
+let pedido = {
+    tamanho:"",
+    tipo:"",
+    sabores:[],
+    precos:[],
+    borda:"",
+    precoBorda:0
+}
+
+// DEFINE TAMANHO
+function setTamanho(t){
+    pedido.tamanho = t
+    pedido.sabores = []
+    pedido.precos = []
+    pedido.tipo = ""
+    atualizar()
+}
+
+// ADICIONAR SABOR (🔥 CORRIGIDO)
+function addSabor(nome, preco, tamanho){
+
+    // define tamanho automático
+    if(pedido.tamanho == ""){
+        pedido.tamanho = tamanho
+    }
+
+    // valida tamanho
+    if(tamanho != pedido.tamanho){
+        alert("Escolha pizzas do mesmo tamanho")
+        return
+    }
+
+    // PRIMEIRO SABOR
+    if(pedido.sabores.length == 0){
+        pedido.sabores = [nome]
+        pedido.precos = [preco]
+        pedido.tipo = "Inteira"
+    }
+
+    // SEGUNDO SABOR
+    else if(pedido.sabores.length == 1){
+        pedido.sabores.push(nome)
+        pedido.precos.push(preco)
+        pedido.tipo = "Meia-Meia"
+    }
+
+    else{
+        alert("Máximo 2 sabores")
+        return
+    }
+
+    atualizar()
+}
+
+// BORDA
+function setBorda(nome, preco){
+    pedido.borda = nome
+    pedido.precoBorda = preco
+    atualizar()
+}
+
+// TOTAL
+function calcular(){
+    let total = 0
+
+    if(pedido.tipo == "Inteira"){
+        total = pedido.precos[0] || 0
+    }
+
+    if(pedido.tipo == "Meia-Meia"){
+        total = Math.max(...pedido.precos, 0)
+    }
+
+    total += pedido.precoBorda
+
+    return total
+}
+
+// ATUALIZAR UI
+function atualizar(){
+
+    let total = calcular()
+
+    let sabores = pedido.sabores.length
+        ? pedido.sabores.join(' / ')
+        : "-"
+
+    resumo.innerHTML = `
+    <div><strong>Tamanho:</strong> ${pedido.tamanho || "-"}</div>
+    <div><strong>Tipo:</strong> ${pedido.tipo || "-"}</div>
+    <div><strong>Sabores:</strong> ${sabores}</div>
+    <div><strong>Borda:</strong> ${pedido.borda || "-"}</div>
+    `
+
+    totalEl.innerText = "R$ " + total.toFixed(2)
+}
+
+// FINALIZAR
+function finalizar(){
+
+    fetch('/finalizar',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({...pedido, total:calcular()})
+    })
+
+    alert("Pedido enviado!")
+
+    pedido = { tamanho:"", tipo:"", sabores:[], precos:[], borda:"", precoBorda:0 }
+    atualizar()
+}
+
+// ================= CADASTRO =================
+function salvarPizza(){
+    fetch('/salvar_pizza',{
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:`numero=${num.value}&nome=${nome.value}&tamanho=${tam.value}&preco=${preco.value}`
+    })
+    alert("Pizza salva!")
+}
+
+function salvarBorda(){
+    fetch('/salvar_borda',{
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:`nome=${bnome.value}&preco=${bpreco.value}`
+    })
+    alert("Borda salva!")
+}
+
+const resumo = document.getElementById("resumo")
+const totalEl = document.getElementById("total")
+
+</script>
+
+</body>
+</html>

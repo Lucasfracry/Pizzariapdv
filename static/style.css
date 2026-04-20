@@ -1,0 +1,168 @@
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* BASE */
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #e2e8f0;
+    height: 100vh;
+}
+
+/* HEADER */
+.header {
+    padding: 18px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+    letter-spacing: 1px;
+}
+
+/* TABS */
+.tabs {
+    display: flex;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(8px);
+}
+
+.tab {
+    flex: 1;
+    padding: 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: 500;
+}
+
+.tab:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.active {
+    background: #2563eb;
+}
+
+/* CONTENT */
+.content {
+    display: none;
+    padding: 20px;
+    animation: fade 0.3s ease;
+}
+
+.show {
+    display: block;
+}
+
+/* ANIMAÇÃO */
+@keyframes fade {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* CARDS */
+.card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 14px;
+    padding: 15px;
+    margin-bottom: 15px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.card h3 {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #cbd5f5;
+}
+
+/* INPUTS */
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    background: #1e293b;
+    color: white;
+}
+
+/* BOTÕES */
+button {
+    width: 100%;
+    padding: 12px;
+    margin: 5px 0;
+    border: none;
+    border-radius: 10px;
+    background: #2563eb;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    transform: scale(1.02);
+    background: #1d4ed8;
+}
+
+/* BOTÃO PIZZA */
+.pizza-btn {
+    background: #16a34a;
+}
+
+.pizza-btn:hover {
+    background: #15803d;
+}
+
+/* BOTÃO FINALIZAR */
+.finalizar {
+    background: #22c55e;
+    font-size: 18px;
+    margin-top: 10px;
+}
+
+.finalizar:hover {
+    background: #16a34a;
+}
+
+/* RESUMO (🔥 MELHORADO) */
+#resumo {
+    line-height: 1.8;
+    font-size: 15px;
+    background: rgba(255,255,255,0.05);
+    padding: 12px;
+    border-radius: 10px;
+    border-left: 4px solid #22c55e;
+    margin-bottom: 10px;
+}
+
+/* TOTAL */
+#total {
+    font-size: 22px;
+    font-weight: bold;
+    margin-top: 10px;
+    color: #22c55e;
+}
+
+/* SCROLL */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 10px;
+}
