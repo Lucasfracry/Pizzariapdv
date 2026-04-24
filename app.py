@@ -4,7 +4,6 @@ import json
 import sqlite3
 import webbrowser
 from threading import Timer
-from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 
 # =========================
@@ -35,6 +34,12 @@ def get_conn() -> sqlite3.Connection:
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 
+def table_has_column(conn: sqlite3.Connection, table: str, column: str) -> bool:
+    cur = conn.cursor()
+    cur.execute(f"PRAGMA table_info({table});")
+    cols = [r["name"] for r in cur.fetchall()]
+    return column in cols
+
 def init_db():
     conn = get_conn()
     cur = conn.cursor()
@@ -44,13 +49,41 @@ def init_db():
     CREATE TABLE IF NOT EXISTS items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         type TEXT NOT NULL CHECK(type IN ('pizza','borda','outros')),
-        code INTEGER NOT NULL UNIQUE,                 -- número do item (para digitar e dar ENTER)
+        code INTEGER NOT NULL UNIQUE,
         name TEXT NOT NULL,
-        price_broto REAL,                             -- só pizza
-        price_grande REAL,                            -- só pizza
-        price REAL,                                   -- borda / outros
+        price_broto REAL,
+        price_grande REAL,
+        price REAL,
         active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    """)
+
+    # Caixa (sessões)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS cash_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        opened_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+        closed_at TEXT,
+        opening_amount REAL NOT NULL DEFAULT 0,
+        closing_amount_reported REAL,
+        closing_amount_expected REAL,
+        diff REAL,
+        status TEXT NOT NULL CHECK(status IN ('OPEN','CLOSED')) DEFAULT 'OPEN',
+        notes TEXT
+    );
+    """)
+
+    # Movimentos do caixa
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS cash_moves (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id INTEGER NOT NULL,
+        move_type TEXT NOT NULL CHECK(move_type IN ('SUPRIMENTO','SANGRIA')),
+        amount REAL NOT NULL,
+        reason TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+        FOREIGN KEY(session_id) REFERENCES cash_sessions(id) ON DELETE CASCADE
     );
     """)
 
@@ -67,17 +100,21 @@ def init_db():
     );
     """)
 
+    # Se não existir, adiciona a coluna session_id em orders (para vincular ao caixa)
+    if not table_has_column(conn, "orders", "session_id"):
+        cur.execute("ALTER TABLE orders ADD COLUMN session_id INTEGER;")
+
     # Itens do pedido
     cur.execute("""
     CREATE TABLE IF NOT EXISTS order_items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         order_id INTEGER NOT NULL,
-        kind TEXT NOT NULL,                           -- 'item' ou 'meio_a_meio'
+        kind TEXT NOT NULL,
         description TEXT NOT NULL,
         qty INTEGER NOT NULL DEFAULT 1,
         unit_price REAL NOT NULL,
         total REAL NOT NULL,
-        meta_json TEXT,                               -- detalhes (ex: ids sabores, tamanho, borda)
+        meta_json TEXT,
         FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE
     );
     """)
@@ -86,13 +123,11 @@ def init_db():
     conn.close()
 
 def seed_if_empty():
-    """Cria alguns itens iniciais se o banco estiver vazio."""
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) AS c FROM items;")
     c = cur.fetchone()["c"]
     if c == 0:
-        # pizzas
         cur.executemany("""
             INSERT INTO items(type, code, name, price_broto, price_grande)
             VALUES('pizza', ?, ?, ?, ?)
@@ -101,7 +136,6 @@ def seed_if_empty():
             (2, "Calabresa", 27.0, 47.0),
             (3, "Frango c/ Catupiry", 30.0, 52.0),
         ])
-        # bordas
         cur.executemany("""
             INSERT INTO items(type, code, name, price)
             VALUES('borda', ?, ?, ?)
@@ -109,7 +143,6 @@ def seed_if_empty():
             (101, "Borda Catupiry", 8.0),
             (102, "Borda Cheddar", 8.0),
         ])
-        # bebidas/outros
         cur.executemany("""
             INSERT INTO items(type, code, name, price)
             VALUES('outros', ?, ?, ?)
@@ -119,6 +152,49 @@ def seed_if_empty():
         ])
         conn.commit()
     conn.close()
+
+# =========================
+# CAIXA HELPERS
+# =========================
+def get_current_session(conn: sqlite3.Connection):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT * FROM cash_sessions
+        WHERE status='OPEN'
+        ORDER BY id DESC
+        LIMIT 1;
+    """)
+    return cur.fetchone()
+
+def compute_session_totals(conn: sqlite3.Connection, session_id: int) -> dict:
+    cur = conn.cursor()
+
+    cur.execute("SELECT opening_amount FROM cash_sessions WHERE id=?;", (session_id,))
+    row = cur.fetchone()
+    opening = float(row["opening_amount"]) if row else 0.0
+
+    cur.execute("SELECT COALESCE(SUM(total), 0) AS s FROM orders WHERE session_id=?;", (session_id,))
+    sales = float(cur.fetchone()["s"])
+
+    cur.execute("""
+        SELECT
+          COALESCE(SUM(CASE WHEN move_type='SUPRIMENTO' THEN amount ELSE 0 END),0) AS supr,
+          COALESCE(SUM(CASE WHEN move_type='SANGRIA' THEN amount ELSE 0 END),0) AS sang
+        FROM cash_moves
+        WHERE session_id=?;
+    """, (session_id,))
+    mv = cur.fetchone()
+    supr = float(mv["supr"])
+    sang = float(mv["sang"])
+
+    expected = round(opening + supr - sang + sales, 2)
+    return {
+        "opening": round(opening, 2),
+        "sales": round(sales, 2),
+        "suprimento": round(supr, 2),
+        "sangria": round(sang, 2),
+        "expected": expected
+    }
 
 # =========================
 # ROTAS PÁGINA
@@ -146,7 +222,6 @@ def api_items_list():
         params.append(item_type)
 
     if q:
-        # busca por nome ou por code
         where.append("(name LIKE ? OR CAST(code AS TEXT) LIKE ?)")
         params.extend([f"%{q}%", f"%{q}%"])
 
@@ -179,7 +254,6 @@ def api_items_create():
     price_grande = data.get("price_grande")
     price = data.get("price")
 
-    # valida por tipo
     if item_type == "pizza":
         if price_broto is None or price_grande is None:
             return jsonify({"error": "pizza precisa de price_broto e price_grande"}), 400
@@ -236,6 +310,143 @@ def api_items_by_code(code: int):
     return jsonify(dict(row))
 
 # =========================
+# API: CAIXA
+# =========================
+@app.get("/api/cash/current")
+def api_cash_current():
+    conn = get_conn()
+    sess = get_current_session(conn)
+    if not sess:
+        conn.close()
+        return jsonify({"open": False})
+    totals = compute_session_totals(conn, sess["id"])
+    conn.close()
+    return jsonify({
+        "open": True,
+        "session": dict(sess),
+        "totals": totals
+    })
+
+@app.post("/api/cash/open")
+def api_cash_open():
+    data = request.get_json(force=True) or {}
+    opening_amount = data.get("opening_amount", 0)
+    notes = (data.get("notes") or "").strip() or None
+
+    try:
+        opening_amount = float(opening_amount)
+    except Exception:
+        return jsonify({"error": "opening_amount inválido"}), 400
+
+    conn = get_conn()
+    cur = conn.cursor()
+
+    # não deixa abrir se já existe caixa aberto
+    cur.execute("SELECT id FROM cash_sessions WHERE status='OPEN' LIMIT 1;")
+    if cur.fetchone():
+        conn.close()
+        return jsonify({"error": "Já existe um caixa aberto."}), 409
+
+    cur.execute("""
+        INSERT INTO cash_sessions(opening_amount, status, notes)
+        VALUES(?, 'OPEN', ?);
+    """, (opening_amount, notes))
+    conn.commit()
+    session_id = cur.lastrowid
+    totals = compute_session_totals(conn, session_id)
+    conn.close()
+    return jsonify({"ok": True, "session_id": session_id, "totals": totals})
+
+@app.post("/api/cash/move")
+def api_cash_move():
+    data = request.get_json(force=True) or {}
+    move_type = (data.get("move_type") or "").strip().upper()
+    amount = data.get("amount")
+    reason = (data.get("reason") or "").strip() or None
+
+    if move_type not in ("SUPRIMENTO", "SANGRIA"):
+        return jsonify({"error": "move_type inválido"}), 400
+    try:
+        amount = float(amount)
+    except Exception:
+        return jsonify({"error": "amount inválido"}), 400
+    if amount <= 0:
+        return jsonify({"error": "amount deve ser > 0"}), 400
+
+    conn = get_conn()
+    sess = get_current_session(conn)
+    if not sess:
+        conn.close()
+        return jsonify({"error": "Não há caixa aberto."}), 409
+
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO cash_moves(session_id, move_type, amount, reason)
+        VALUES(?, ?, ?, ?);
+    """, (sess["id"], move_type, amount, reason))
+    conn.commit()
+
+    totals = compute_session_totals(conn, sess["id"])
+    conn.close()
+    return jsonify({"ok": True, "totals": totals})
+
+@app.post("/api/cash/close")
+def api_cash_close():
+    data = request.get_json(force=True) or {}
+    closing_amount_reported = data.get("closing_amount_reported")
+    notes = (data.get("notes") or "").strip() or None
+
+    try:
+        closing_amount_reported = float(closing_amount_reported)
+    except Exception:
+        return jsonify({"error": "closing_amount_reported inválido"}), 400
+
+    conn = get_conn()
+    sess = get_current_session(conn)
+    if not sess:
+        conn.close()
+        return jsonify({"error": "Não há caixa aberto."}), 409
+
+    totals = compute_session_totals(conn, sess["id"])
+    expected = totals["expected"]
+    diff = round(closing_amount_reported - expected, 2)
+
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE cash_sessions
+        SET status='CLOSED',
+            closed_at=datetime('now','localtime'),
+            closing_amount_reported=?,
+            closing_amount_expected=?,
+            diff=?,
+            notes=COALESCE(notes,'') || CASE WHEN ? IS NULL OR ?='' THEN '' ELSE (' | FECHAMENTO: ' || ?) END
+        WHERE id=?;
+    """, (closing_amount_reported, expected, diff, notes, notes, notes, sess["id"]))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "expected": expected, "reported": closing_amount_reported, "diff": diff})
+
+@app.get("/api/cash/sessions")
+def api_cash_sessions():
+    limit = request.args.get("limit", "30")
+    try:
+        limit = max(1, min(200, int(limit)))
+    except Exception:
+        limit = 30
+
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT * FROM cash_sessions
+        ORDER BY id DESC
+        LIMIT ?;
+    """, (limit,))
+    sessions = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return jsonify(sessions)
+
+# =========================
 # API: PEDIDOS
 # =========================
 @app.post("/api/orders")
@@ -254,8 +465,8 @@ def api_orders_create():
     if not isinstance(items, list) or len(items) == 0:
         return jsonify({"error": "pedido vazio"}), 400
 
+    # valida total
     try:
-        # confere total no backend pra evitar total errado no front
         total = 0.0
         for it in items:
             qty = int(it.get("qty", 1))
@@ -266,11 +477,18 @@ def api_orders_create():
         return jsonify({"error": "itens inválidos"}), 400
 
     conn = get_conn()
+
+    # exige caixa aberto
+    sess = get_current_session(conn)
+    if not sess:
+        conn.close()
+        return jsonify({"error": "Abra o caixa antes de vender."}), 409
+
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO orders(order_type, customer, payment, notes, total)
-        VALUES(?, ?, ?, ?, ?)
-    """, (order_type, customer, payment, notes, total))
+        INSERT INTO orders(order_type, customer, payment, notes, total, session_id)
+        VALUES(?, ?, ?, ?, ?, ?)
+    """, (order_type, customer, payment, notes, total, sess["id"]))
     order_id = cur.lastrowid
 
     for it in items:
@@ -302,14 +520,13 @@ def api_orders_list():
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-        SELECT id, order_type, customer, payment, total, created_at
+        SELECT id, order_type, customer, payment, total, created_at, session_id
         FROM orders
         ORDER BY id DESC
         LIMIT ?;
     """, (limit,))
     orders = [dict(r) for r in cur.fetchall()]
 
-    # pega itens de cada pedido (simples e suficiente pro histórico)
     for o in orders:
         cur.execute("""
             SELECT kind, description, qty, unit_price, total
@@ -321,6 +538,32 @@ def api_orders_list():
 
     conn.close()
     return jsonify(orders)
+
+# =========================
+# API: HISTÓRICO DE VENDAS (RESUMO)
+# =========================
+@app.get("/api/sales/summary")
+def api_sales_summary():
+    # se passar session_id, resume o caixa
+    session_id = request.args.get("session_id")
+    conn = get_conn()
+    cur = conn.cursor()
+
+    if session_id:
+        try:
+            session_id = int(session_id)
+        except Exception:
+            conn.close()
+            return jsonify({"error": "session_id inválido"}), 400
+        totals = compute_session_totals(conn, session_id)
+        conn.close()
+        return jsonify(totals)
+
+    # fallback: total geral (últimos X)
+    cur.execute("SELECT COALESCE(SUM(total),0) AS s, COUNT(*) AS c FROM orders;")
+    r = cur.fetchone()
+    conn.close()
+    return jsonify({"sales": float(r["s"]), "count": int(r["c"])})
 
 # =========================
 # EXEC

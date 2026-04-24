@@ -12,12 +12,13 @@
       <div class="logo">🍕</div>
       <div>
         <div class="title">PDV Pizzaria</div>
-        <div class="subtitle">Cadastro • Pedido • Histórico</div>
+        <div class="subtitle">Caixa • Cadastro • Pedido • Histórico</div>
       </div>
     </div>
 
     <nav class="tabs">
       <button class="tab active" data-tab="pdv">PDV</button>
+      <button class="tab" data-tab="caixa">Caixa</button>
       <button class="tab" data-tab="cadastro">Cadastro</button>
       <button class="tab" data-tab="historico">Histórico</button>
     </nav>
@@ -40,24 +41,6 @@
           </div>
 
           <div class="hr"></div>
-
-          <div class="row wrap">
-            <div class="pill">
-              <span class="dot"></span>
-              <span>Pizza</span>
-              <button class="mini" id="btnReloadPizzas">Atualizar</button>
-            </div>
-            <div class="pill">
-              <span class="dot borda"></span>
-              <span>Borda</span>
-              <button class="mini" id="btnReloadBordas">Atualizar</button>
-            </div>
-            <div class="pill">
-              <span class="dot outros"></span>
-              <span>Bebidas/Outros</span>
-              <button class="mini" id="btnReloadOutros">Atualizar</button>
-            </div>
-          </div>
 
           <div class="threecols">
             <div>
@@ -82,31 +65,14 @@
           </div>
 
           <div class="row wrap">
-            <label class="radio">
-              <input type="radio" name="order_type" value="BALCAO" checked />
-              <span>Balcão</span>
-            </label>
-            <label class="radio">
-              <input type="radio" name="order_type" value="MESA" />
-              <span>Mesa</span>
-            </label>
-            <label class="radio">
-              <input type="radio" name="order_type" value="DELIVERY" />
-              <span>Delivery</span>
-            </label>
+            <label class="radio"><input type="radio" name="order_type" value="BALCAO" checked /><span>Balcão</span></label>
+            <label class="radio"><input type="radio" name="order_type" value="MESA" /><span>Mesa</span></label>
+            <label class="radio"><input type="radio" name="order_type" value="DELIVERY" /><span>Delivery</span></label>
           </div>
 
-          <div class="row">
-            <input id="clienteInput" class="input" placeholder="Cliente / Mesa (opcional)" />
-          </div>
-
-          <div class="row">
-            <input id="pagamentoInput" class="input" placeholder="Pagamento (Dinheiro, Pix, Cartão...) (opcional)" />
-          </div>
-
-          <div class="row">
-            <input id="obsInput" class="input" placeholder="Observações (opcional)" />
-          </div>
+          <div class="row"><input id="clienteInput" class="input" placeholder="Cliente / Mesa (opcional)" /></div>
+          <div class="row"><input id="pagamentoInput" class="input" placeholder="Pagamento (Dinheiro, Pix, Cartão...) (opcional)" /></div>
+          <div class="row"><input id="obsInput" class="input" placeholder="Observações (opcional)" /></div>
 
           <div class="hr"></div>
 
@@ -130,67 +96,105 @@
       </div>
     </section>
 
+    <!-- ====== ABA CAIXA ====== -->
+    <section class="panel tabpanel" id="tab-caixa">
+      <div class="grid2">
+        <div class="card">
+          <div class="card-head">
+            <h2>Status do Caixa</h2>
+            <div class="muted" id="cashStatus">Carregando...</div>
+          </div>
+
+          <div class="cash-metrics" id="cashMetrics"></div>
+
+          <div class="hr"></div>
+
+          <div id="cashOpenBox" class="block">
+            <h3>Abrir Caixa</h3>
+            <div class="row">
+              <input id="openAmount" class="input" placeholder="Valor de abertura (ex: 100.00)" />
+            </div>
+            <div class="row">
+              <input id="openNotes" class="input" placeholder="Observação (opcional)" />
+            </div>
+            <div class="row">
+              <button class="btn primary" id="btnOpenCash">Abrir Caixa</button>
+            </div>
+          </div>
+
+          <div id="cashMoveBox" class="block hidden">
+            <h3>Movimentos</h3>
+            <div class="row wrap">
+              <label class="radio"><input type="radio" name="move_type" value="SUPRIMENTO" checked /><span>Suprimento</span></label>
+              <label class="radio"><input type="radio" name="move_type" value="SANGRIA" /><span>Sangria</span></label>
+            </div>
+            <div class="row">
+              <input id="moveAmount" class="input" placeholder="Valor (ex: 50.00)" />
+            </div>
+            <div class="row">
+              <input id="moveReason" class="input" placeholder="Motivo (opcional)" />
+            </div>
+            <div class="row">
+              <button class="btn" id="btnAddMove">Lançar Movimento</button>
+            </div>
+
+            <div class="hr"></div>
+
+            <h3>Fechar Caixa</h3>
+            <div class="row">
+              <input id="closeReported" class="input" placeholder="Valor contado no caixa (ex: 350.00)" />
+            </div>
+            <div class="row">
+              <input id="closeNotes" class="input" placeholder="Observação do fechamento (opcional)" />
+            </div>
+            <div class="row">
+              <button class="btn danger" id="btnCloseCash">Fechar Caixa</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Últimos Caixas</h2>
+            <div class="row" style="gap:8px;">
+              <button class="btn" id="btnLoadSessions">Atualizar</button>
+            </div>
+          </div>
+          <div id="sessionsList" class="history"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ====== ABA CADASTRO ====== -->
     <section class="panel tabpanel" id="tab-cadastro">
       <div class="grid2">
         <div class="card">
           <div class="card-head">
             <h2>Cadastrar Item</h2>
-            <div class="muted">Tudo salva no SQLite (não perde ao fechar)</div>
+            <div class="muted">Tudo salva no SQLite</div>
           </div>
 
           <div class="row wrap">
-            <label class="radio">
-              <input type="radio" name="cad_type" value="pizza" checked />
-              <span>Pizza</span>
-            </label>
-            <label class="radio">
-              <input type="radio" name="cad_type" value="borda" />
-              <span>Borda</span>
-            </label>
-            <label class="radio">
-              <input type="radio" name="cad_type" value="outros" />
-              <span>Bebida/Outros</span>
-            </label>
+            <label class="radio"><input type="radio" name="cad_type" value="pizza" checked /><span>Pizza</span></label>
+            <label class="radio"><input type="radio" name="cad_type" value="borda" /><span>Borda</span></label>
+            <label class="radio"><input type="radio" name="cad_type" value="outros" /><span>Bebida/Outros</span></label>
           </div>
 
-          <div class="row">
-            <input id="cadCode" class="input" placeholder="Código (número) — ex: 1, 101, 201" />
-          </div>
+          <div class="row"><input id="cadCode" class="input" placeholder="Código (número) — ex: 1, 101, 201" /></div>
+          <div class="row"><input id="cadName" class="input" placeholder="Nome — ex: Calabresa, Borda Catupiry, Coca Lata" /></div>
 
-          <div class="row">
-            <input id="cadName" class="input" placeholder="Nome — ex: Calabresa, Borda Catupiry, Coca Lata" />
-          </div>
-
-          <!-- Campos de pizza -->
           <div id="pizzaPrices" class="block">
-            <div class="row">
-              <input id="cadBroto" class="input" placeholder="Preço Broto — ex: 25.00" />
-            </div>
-            <div class="row">
-              <input id="cadGrande" class="input" placeholder="Preço Grande — ex: 45.00" />
-            </div>
+            <div class="row"><input id="cadBroto" class="input" placeholder="Preço Broto — ex: 25.00" /></div>
+            <div class="row"><input id="cadGrande" class="input" placeholder="Preço Grande — ex: 45.00" /></div>
           </div>
 
-          <!-- Campos de borda/outros -->
           <div id="singlePrice" class="block hidden">
-            <div class="row">
-              <input id="cadPrice" class="input" placeholder="Preço — ex: 8.00" />
-            </div>
+            <div class="row"><input id="cadPrice" class="input" placeholder="Preço — ex: 8.00" /></div>
           </div>
 
           <div class="row">
             <button class="btn primary" id="btnCadastrar">Salvar</button>
             <button class="btn" id="btnRecarregarTudo">Recarregar</button>
-          </div>
-
-          <div class="muted small">
-            Regras:
-            <ul class="small">
-              <li>Pizza tem <b>Broto</b> e <b>Grande</b>.</li>
-              <li>Borda e Bebida/Outros tem <b>1 preço</b>.</li>
-              <li>O <b>código</b> não pode repetir.</li>
-            </ul>
           </div>
         </div>
 
@@ -204,18 +208,9 @@
           </div>
 
           <div class="threecols">
-            <div>
-              <h3>Pizzas</h3>
-              <div id="cadListPizzas" class="list"></div>
-            </div>
-            <div>
-              <h3>Bordas</h3>
-              <div id="cadListBordas" class="list"></div>
-            </div>
-            <div>
-              <h3>Outros</h3>
-              <div id="cadListOutros" class="list"></div>
-            </div>
+            <div><h3>Pizzas</h3><div id="cadListPizzas" class="list"></div></div>
+            <div><h3>Bordas</h3><div id="cadListBordas" class="list"></div></div>
+            <div><h3>Outros</h3><div id="cadListOutros" class="list"></div></div>
           </div>
         </div>
       </div>
@@ -225,19 +220,18 @@
     <section class="panel tabpanel" id="tab-historico">
       <div class="card">
         <div class="card-head">
-          <h2>Histórico</h2>
+          <h2>Histórico de Vendas</h2>
           <div class="row" style="gap: 8px;">
             <button class="btn" id="btnLoadHistory">Atualizar</button>
             <input id="historyLimit" class="input" style="max-width: 140px;" placeholder="Limite (20)" />
           </div>
         </div>
-
         <div id="history" class="history"></div>
       </div>
     </section>
   </main>
 
-  <!-- ===== MODAL MEIO A MEIO (dentro da página, sem alert) ===== -->
+  <!-- ===== MODAL MEIO A MEIO ===== -->
   <div class="modal hidden" id="modalMeio">
     <div class="modal-card">
       <div class="modal-head">
@@ -256,14 +250,8 @@
       </div>
 
       <div class="row wrap">
-        <label class="radio">
-          <input type="radio" name="meio_size" value="GRANDE" checked />
-          <span>Grande</span>
-        </label>
-        <label class="radio">
-          <input type="radio" name="meio_size" value="BROTO" />
-          <span>Broto</span>
-        </label>
+        <label class="radio"><input type="radio" name="meio_size" value="GRANDE" checked /><span>Grande</span></label>
+        <label class="radio"><input type="radio" name="meio_size" value="BROTO" /><span>Broto</span></label>
       </div>
 
       <div class="row">
@@ -283,12 +271,11 @@
       </div>
 
       <div class="muted small">
-        Regra do preço: no meio a meio, pega o <b>maior preço</b> entre os dois sabores no tamanho escolhido + borda (se tiver).
+        Regra: no meio a meio, pega o <b>maior preço</b> entre os dois sabores no tamanho escolhido + borda (se tiver).
       </div>
     </div>
   </div>
 
-  <!-- Área de impressão (escondida) -->
   <div id="printArea" class="print-area"></div>
 
   <script>
@@ -307,15 +294,9 @@
     }
 
     async function api(path, opts={}) {
-      const res = await fetch(path, {
-        headers: { 'Content-Type':'application/json' },
-        ...opts
-      });
+      const res = await fetch(path, { headers: { 'Content-Type':'application/json' }, ...opts });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const m = data?.error || `Erro HTTP ${res.status}`;
-        throw new Error(m);
-      }
+      if (!res.ok) throw new Error(data?.error || `Erro HTTP ${res.status}`);
       return data;
     }
 
@@ -325,18 +306,16 @@
     let pizzas = [];
     let bordas = [];
     let outros = [];
-    let cart = []; // {kind, description, qty, unit_price, meta}
+    let cart = [];
+    let cashOpen = false;
 
-    function cartTotal() {
-      return cart.reduce((acc, it) => acc + (it.qty * it.unit_price), 0);
-    }
+    function cartTotal() { return cart.reduce((acc, it) => acc + (it.qty * it.unit_price), 0); }
 
     function renderCart() {
       const el = qs('#cart');
       el.innerHTML = '';
-      if (cart.length === 0) {
-        el.innerHTML = `<div class="empty">Carrinho vazio.</div>`;
-      } else {
+      if (cart.length === 0) el.innerHTML = `<div class="empty">Carrinho vazio.</div>`;
+      else {
         cart.forEach((it, idx) => {
           const row = document.createElement('div');
           row.className = 'cart-row';
@@ -358,7 +337,6 @@
           el.appendChild(row);
         });
       }
-
       qs('#totalValue').textContent = brl(cartTotal());
       qs('#pedidoInfo').textContent = `${cart.length} item(ns)`;
     }
@@ -369,11 +347,9 @@
       const idx = Number(b.dataset.idx);
       const act = b.dataset.act;
       if (Number.isNaN(idx) || !act) return;
-
       if (act === 'inc') cart[idx].qty += 1;
       if (act === 'dec') cart[idx].qty = Math.max(1, cart[idx].qty - 1);
       if (act === 'del') cart.splice(idx, 1);
-
       renderCart();
     }
 
@@ -383,19 +359,13 @@
     function renderList(elId, arr, type) {
       const el = qs(elId);
       el.innerHTML = '';
-      if (!arr.length) {
-        el.innerHTML = `<div class="empty">Sem itens.</div>`;
-        return;
-      }
+      if (!arr.length) return el.innerHTML = `<div class="empty">Sem itens.</div>`;
       arr.forEach(it => {
         const d = document.createElement('div');
         d.className = 'item';
         let priceLine = '';
-        if (type === 'pizza') {
-          priceLine = `<span class="muted">Broto:</span> ${brl(it.price_broto)} <span class="muted">| Grande:</span> ${brl(it.price_grande)}`;
-        } else {
-          priceLine = `${brl(it.price)}`;
-        }
+        if (type === 'pizza') priceLine = `<span class="muted">Broto:</span> ${brl(it.price_broto)} <span class="muted">| Grande:</span> ${brl(it.price_grande)}`;
+        else priceLine = `${brl(it.price)}`;
         d.innerHTML = `
           <div class="item-top">
             <div class="item-code">#${it.code}</div>
@@ -407,37 +377,15 @@
       });
     }
 
-    async function loadAllLists() {
-      pizzas = await api('/api/items?type=pizza');
-      bordas = await api('/api/items?type=borda');
-      outros = await api('/api/items?type=outros');
-
-      // PDV lists
-      renderList('#listPizzas', pizzas, 'pizza');
-      renderList('#listBordas', bordas, 'borda');
-      renderList('#listOutros', outros, 'outros');
-
-      // Cadastro lists
-      renderCadLists(pizzas, bordas, outros);
-
-      // Modal
-      fillMeioSelectors();
-    }
-
     function renderCadLists(pz, bd, ot) {
       const render = (elId, arr, type) => {
         const el = qs(elId);
         el.innerHTML = '';
         if (!arr.length) return el.innerHTML = `<div class="empty">Sem itens.</div>`;
-
         arr.forEach(it => {
           const row = document.createElement('div');
           row.className = 'item item-actions';
-
-          let priceLine = '';
-          if (type === 'pizza') priceLine = `Broto ${brl(it.price_broto)} • Grande ${brl(it.price_grande)}`;
-          else priceLine = brl(it.price);
-
+          let priceLine = (type === 'pizza') ? `Broto ${brl(it.price_broto)} • Grande ${brl(it.price_grande)}` : brl(it.price);
           row.innerHTML = `
             <div>
               <div class="item-top">
@@ -451,10 +399,122 @@
           el.appendChild(row);
         });
       };
-
       render('#cadListPizzas', pz, 'pizza');
       render('#cadListBordas', bd, 'borda');
       render('#cadListOutros', ot, 'outros');
+    }
+
+    async function loadAllLists() {
+      pizzas = await api('/api/items?type=pizza');
+      bordas = await api('/api/items?type=borda');
+      outros = await api('/api/items?type=outros');
+
+      renderList('#listPizzas', pizzas, 'pizza');
+      renderList('#listBordas', bordas, 'borda');
+      renderList('#listOutros', outros, 'outros');
+
+      renderCadLists(pizzas, bordas, outros);
+      fillMeioSelectors();
+    }
+
+    // =============================
+    // CAIXA UI + API
+    // =============================
+    function renderCashMetrics(t) {
+      const el = qs('#cashMetrics');
+      if (!t) return el.innerHTML = '';
+      el.innerHTML = `
+        <div class="metric"><div class="muted">Abertura</div><div class="metricv">${brl(t.opening)}</div></div>
+        <div class="metric"><div class="muted">Vendas</div><div class="metricv">${brl(t.sales)}</div></div>
+        <div class="metric"><div class="muted">Suprimento</div><div class="metricv">${brl(t.suprimento)}</div></div>
+        <div class="metric"><div class="muted">Sangria</div><div class="metricv">${brl(t.sangria)}</div></div>
+        <div class="metric highlight"><div class="muted">Esperado</div><div class="metricv">${brl(t.expected)}</div></div>
+      `;
+    }
+
+    async function loadCash() {
+      const c = await api('/api/cash/current');
+      cashOpen = !!c.open;
+      if (!cashOpen) {
+        qs('#cashStatus').textContent = 'FECHADO — abra o caixa para vender';
+        renderCashMetrics(null);
+        qs('#cashOpenBox').classList.remove('hidden');
+        qs('#cashMoveBox').classList.add('hidden');
+        return;
+      }
+      qs('#cashStatus').textContent = `ABERTO — Sessão #${c.session.id} • ${c.session.opened_at}`;
+      renderCashMetrics(c.totals);
+      qs('#cashOpenBox').classList.add('hidden');
+      qs('#cashMoveBox').classList.remove('hidden');
+    }
+
+    async function openCash() {
+      try {
+        const opening_amount = qs('#openAmount').value.trim() || "0";
+        const notes = qs('#openNotes').value.trim();
+        await api('/api/cash/open', { method:'POST', body: JSON.stringify({ opening_amount, notes }) });
+        toast('Caixa aberto!', 'ok');
+        qs('#openAmount').value = '';
+        qs('#openNotes').value = '';
+        await loadCash();
+        await loadSessions();
+      } catch (e) { toast(e.message, 'err'); }
+    }
+
+    function getMoveType() {
+      return (qsa('input[name="move_type"]').find(r => r.checked)?.value) || 'SUPRIMENTO';
+    }
+
+    async function addMove() {
+      try {
+        const move_type = getMoveType();
+        const amount = qs('#moveAmount').value.trim();
+        const reason = qs('#moveReason').value.trim();
+        await api('/api/cash/move', { method:'POST', body: JSON.stringify({ move_type, amount, reason }) });
+        toast('Movimento lançado!', 'ok');
+        qs('#moveAmount').value = '';
+        qs('#moveReason').value = '';
+        await loadCash();
+        await loadSessions();
+      } catch (e) { toast(e.message, 'err'); }
+    }
+
+    async function closeCash() {
+      try {
+        const closing_amount_reported = qs('#closeReported').value.trim();
+        const notes = qs('#closeNotes').value.trim();
+        const r = await api('/api/cash/close', { method:'POST', body: JSON.stringify({ closing_amount_reported, notes }) });
+        toast(`Caixa fechado! Diferença: ${brl(r.diff)}`, (Math.abs(r.diff) < 0.01 ? 'ok' : 'err'));
+        qs('#closeReported').value = '';
+        qs('#closeNotes').value = '';
+        await loadCash();
+        await loadSessions();
+      } catch (e) { toast(e.message, 'err'); }
+    }
+
+    async function loadSessions() {
+      const sessions = await api('/api/cash/sessions?limit=30');
+      const el = qs('#sessionsList');
+      if (!sessions.length) return el.innerHTML = `<div class="empty">Sem sessões.</div>`;
+      el.innerHTML = '';
+      sessions.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'h-card';
+        const status = s.status === 'OPEN' ? 'ABERTO' : 'FECHADO';
+        card.innerHTML = `
+          <div class="h-head">
+            <div>
+              <div class="h-title">Caixa #${s.id} • ${status}</div>
+              <div class="muted small">Abertura: ${s.opened_at}${s.closed_at ? ' • Fech.: ' + s.closed_at : ''}</div>
+            </div>
+            <div class="h-total">${brl(s.closing_amount_reported ?? 0)}</div>
+          </div>
+          <div class="muted small" style="margin-top:8px;">
+            Abertura: ${brl(s.opening_amount)} • Esperado: ${brl(s.closing_amount_expected ?? 0)} • Dif: ${brl(s.diff ?? 0)}
+          </div>
+        `;
+        el.appendChild(card);
+      });
     }
 
     // =============================
@@ -463,49 +523,84 @@
     async function addByCode() {
       const v = qs('#codeInput').value.trim();
       if (!v) return;
-
       let code = Number(v);
       if (Number.isNaN(code)) return toast('Código inválido', 'err');
 
       try {
         const it = await api(`/api/items/by-code/${code}`);
-        if (it.type === 'pizza') {
-          // pergunta tamanho via mini-modal rápido (sem alert)
-          openQuickPizzaSize(it);
-        } else {
-          cart.push({
-            kind: 'item',
-            description: `#${it.code} ${it.name}`,
-            qty: 1,
-            unit_price: Number(it.price || 0),
-            meta: { item_id: it.id, type: it.type }
-          });
+        if (it.type === 'pizza') openQuickPizzaSize(it);
+        else {
+          cart.push({ kind: 'item', description: `#${it.code} ${it.name}`, qty: 1, unit_price: Number(it.price || 0), meta: { item_id: it.id, type: it.type } });
           renderCart();
           qs('#codeInput').value = '';
           qs('#codeInput').focus();
         }
-      } catch (e) {
-        toast(e.message || 'Não encontrado', 'err');
+      } catch (e) { toast(e.message || 'Não encontrado', 'err'); }
+    }
+
+    // =============================
+    // MEIO A MEIO
+    // =============================
+    function fillBordaSelect() {
+      const sel = qs('#meioBorda');
+      sel.innerHTML = `<option value="">Sem borda</option>`;
+      bordas.forEach(b => {
+        const op = document.createElement('option');
+        op.value = b.id;
+        op.textContent = `${b.name} (+${brl(Number(b.price))})`;
+        sel.appendChild(op);
+      });
+    }
+
+    function fillMeioSelectors() {
+      const s1 = qs('#meioS1');
+      const s2 = qs('#meioS2');
+      s1.innerHTML = '';
+      s2.innerHTML = '';
+      pizzas.forEach(p => {
+        const o1 = document.createElement('option');
+        o1.value = p.id;
+        o1.textContent = `${p.name} (#${p.code})`;
+        const o2 = o1.cloneNode(true);
+        s1.appendChild(o1);
+        s2.appendChild(o2);
+      });
+      fillBordaSelect();
+      qs('#meioS1').disabled = false;
+      qs('#meioS2').disabled = false;
+    }
+
+    function openMeioModal() {
+      if (!pizzas.length) return toast('Cadastre pizzas primeiro', 'err');
+      qs('#modalMeio').classList.remove('hidden');
+      qs('.modal-card h2').textContent = 'Pizza Meio a Meio';
+      qs('#meioS1').disabled = false;
+      qs('#meioS2').disabled = false;
+      qs('#confirmMeio').onclick = confirmMeio;
+      qs('#meioObs').value = '';
+      qs('#meioBorda').value = '';
+    }
+
+    function closeMeioModal(reset = false) {
+      qs('#modalMeio').classList.add('hidden');
+      if (reset) {
+        fillMeioSelectors();
+        qs('#meioObs').value = '';
       }
     }
 
-    // Mini modal para tamanho da pizza (sem alert)
     function openQuickPizzaSize(pizzaItem) {
-      // Reaproveita modal meio a meio, mas em modo "pizza inteira"
-      // (simples e sem popup do navegador)
       const modal = qs('#modalMeio');
       modal.classList.remove('hidden');
 
       qs('.modal-card h2').textContent = 'Pizza (Inteira)';
       qs('#meioS1').innerHTML = `<option value="${pizzaItem.id}">${pizzaItem.name} (#${pizzaItem.code})</option>`;
       qs('#meioS2').innerHTML = `<option value="${pizzaItem.id}">${pizzaItem.name} (#${pizzaItem.code})</option>`;
-      qs('#meioS2').disabled = true; // força inteira
+      qs('#meioS2').disabled = true;
       qs('#meioS1').disabled = true;
 
-      // bordas
       fillBordaSelect();
 
-      // botão confirmar: adiciona inteira
       qs('#confirmMeio').onclick = () => {
         const size = (qsa('input[name="meio_size"]').find(r => r.checked)?.value) || 'GRANDE';
         const bordaId = Number(qs('#meioBorda').value || 0) || null;
@@ -540,62 +635,6 @@
         qs('#codeInput').value = '';
         qs('#codeInput').focus();
       };
-    }
-
-    // =============================
-    // MEIO A MEIO
-    // =============================
-    function fillBordaSelect() {
-      const sel = qs('#meioBorda');
-      sel.innerHTML = `<option value="">Sem borda</option>`;
-      bordas.forEach(b => {
-        const op = document.createElement('option');
-        op.value = b.id;
-        op.textContent = `${b.name} (+${brl(Number(b.price))})`;
-        sel.appendChild(op);
-      });
-    }
-
-    function fillMeioSelectors() {
-      const s1 = qs('#meioS1');
-      const s2 = qs('#meioS2');
-      s1.innerHTML = '';
-      s2.innerHTML = '';
-      pizzas.forEach(p => {
-        const o1 = document.createElement('option');
-        o1.value = p.id;
-        o1.textContent = `${p.name} (#${p.code})`;
-        const o2 = o1.cloneNode(true);
-        s1.appendChild(o1);
-        s2.appendChild(o2);
-      });
-
-      fillBordaSelect();
-      qs('#meioS1').disabled = false;
-      qs('#meioS2').disabled = false;
-    }
-
-    function openMeioModal() {
-      if (!pizzas.length) return toast('Cadastre pizzas primeiro', 'err');
-      qs('#modalMeio').classList.remove('hidden');
-      qs('.modal-card h2').textContent = 'Pizza Meio a Meio';
-      qs('#meioS1').disabled = false;
-      qs('#meioS2').disabled = false;
-
-      qs('#confirmMeio').onclick = confirmMeio;
-      qs('#meioObs').value = '';
-      qs('#meioBorda').value = '';
-    }
-
-    function closeMeioModal(reset = false) {
-      qs('#modalMeio').classList.add('hidden');
-      if (reset) {
-        // volta pro modo padrão
-        fillMeioSelectors();
-        qs('#meioS1').disabled = false;
-        qs('#meioS2').disabled = false;
-        qs('#meioObs').value = '';
-      }
     }
 
     function confirmMeio() {
@@ -634,13 +673,7 @@
         description: desc,
         qty: 1,
         unit_price: unit,
-        meta: {
-          size,
-          sabor1_id: p1.id,
-          sabor2_id: p2.id,
-          borda_id: bordaId,
-          obs
-        }
+        meta: { size, sabor1_id: p1.id, sabor2_id: p2.id, borda_id: bordaId, obs }
       });
 
       closeMeioModal(true);
@@ -648,7 +681,7 @@
     }
 
     // =============================
-    // SAVE ORDER
+    // SAVE ORDER (exige caixa aberto)
     // =============================
     function getOrderType() {
       return (qsa('input[name="order_type"]').find(r => r.checked)?.value) || 'BALCAO';
@@ -657,39 +690,32 @@
     async function salvarPedido() {
       if (!cart.length) return toast('Carrinho vazio', 'err');
 
-      const payload = {
-        order_type: getOrderType(),
-        customer: qs('#clienteInput').value.trim(),
-        payment: qs('#pagamentoInput').value.trim(),
-        notes: qs('#obsInput').value.trim(),
-        items: cart.map(it => ({
-          kind: it.kind,
-          description: it.description,
-          qty: it.qty,
-          unit_price: it.unit_price,
-          meta: it.meta || {}
-        }))
-      };
-
       try {
+        const payload = {
+          order_type: getOrderType(),
+          customer: qs('#clienteInput').value.trim(),
+          payment: qs('#pagamentoInput').value.trim(),
+          notes: qs('#obsInput').value.trim(),
+          items: cart.map(it => ({ kind: it.kind, description: it.description, qty: it.qty, unit_price: it.unit_price, meta: it.meta || {} }))
+        };
+
         const res = await api('/api/orders', { method:'POST', body: JSON.stringify(payload) });
         toast(`Pedido #${res.order_id} salvo! Total ${brl(res.total)}`, 'ok');
-
-        // imprime automático? (se quiser)
-        // printReceipt(res.order_id);
 
         cart = [];
         renderCart();
         await loadHistory();
+        await loadCash();       // atualiza métricas do caixa
+        await loadSessions();
       } catch (e) {
         toast(e.message || 'Erro ao salvar', 'err');
       }
     }
 
     // =============================
-    // PRINT
+    // PRINT (simples)
     // =============================
-    function buildReceiptHtml(orderId = null) {
+    function buildReceiptHtml() {
       const dt = new Date();
       const tipo = getOrderType();
       const cliente = qs('#clienteInput').value.trim();
@@ -710,7 +736,6 @@
       return `
         <div class="receipt">
           <div class="r-title">PIZZARIA</div>
-          <div class="r-sub">Pedido ${orderId ? '#' + orderId : ''}</div>
           <div class="r-sub">${dt.toLocaleString('pt-BR')}</div>
           <div class="r-hr"></div>
           <div class="r-meta"><b>Tipo:</b> ${tipo}</div>
@@ -720,10 +745,7 @@
           <div class="r-hr"></div>
           ${itemsHtml}
           <div class="r-hr"></div>
-          <div class="r-total">
-            <span>Total</span>
-            <b>${brl(total)}</b>
-          </div>
+          <div class="r-total"><span>Total</span><b>${brl(total)}</b></div>
           <div class="r-footer">Obrigado!</div>
         </div>
       `;
@@ -731,9 +753,7 @@
 
     function imprimir() {
       if (!cart.length) return toast('Carrinho vazio', 'err');
-      const printArea = qs('#printArea');
-      printArea.innerHTML = buildReceiptHtml(null);
-
+      qs('#printArea').innerHTML = buildReceiptHtml();
       window.print();
     }
 
@@ -745,16 +765,12 @@
       const orders = await api(`/api/orders?limit=${lim}`);
       const el = qs('#history');
 
-      if (!orders.length) {
-        el.innerHTML = `<div class="empty">Sem pedidos.</div>`;
-        return;
-      }
+      if (!orders.length) return el.innerHTML = `<div class="empty">Sem vendas.</div>`;
 
       el.innerHTML = '';
       orders.forEach(o => {
         const card = document.createElement('div');
         card.className = 'h-card';
-
         const items = (o.items || []).map(i => `
           <div class="h-item">
             <span>${i.qty}x</span>
@@ -762,12 +778,11 @@
             <b>${brl(i.total)}</b>
           </div>
         `).join('');
-
         card.innerHTML = `
           <div class="h-head">
             <div>
-              <div class="h-title">Pedido #${o.id} • ${o.order_type}</div>
-              <div class="muted small">${o.created_at}${o.customer ? ' • ' + o.customer : ''}</div>
+              <div class="h-title">Venda #${o.id} • ${o.order_type}</div>
+              <div class="muted small">${o.created_at}${o.customer ? ' • ' + o.customer : ''}${o.session_id ? ' • Caixa #' + o.session_id : ''}</div>
             </div>
             <div class="h-total">${brl(o.total)}</div>
           </div>
@@ -780,31 +795,18 @@
     // =============================
     // CADASTRO
     // =============================
-    function currentCadType() {
-      return (qsa('input[name="cad_type"]').find(r => r.checked)?.value) || 'pizza';
-    }
-
+    function currentCadType() { return (qsa('input[name="cad_type"]').find(r => r.checked)?.value) || 'pizza'; }
     function updateCadFields() {
       const t = currentCadType();
-      const pizza = qs('#pizzaPrices');
-      const single = qs('#singlePrice');
-
-      if (t === 'pizza') {
-        pizza.classList.remove('hidden');
-        single.classList.add('hidden');
-      } else {
-        pizza.classList.add('hidden');
-        single.classList.remove('hidden');
-      }
+      qs('#pizzaPrices').classList.toggle('hidden', t !== 'pizza');
+      qs('#singlePrice').classList.toggle('hidden', t === 'pizza');
     }
 
     async function cadastrar() {
       const t = currentCadType();
       const code = qs('#cadCode').value.trim();
       const name = qs('#cadName').value.trim();
-
       const payload = { type: t, code, name };
-
       if (t === 'pizza') {
         payload.price_broto = qs('#cadBroto').value.trim();
         payload.price_grande = qs('#cadGrande').value.trim();
@@ -815,17 +817,13 @@
       try {
         await api('/api/items', { method:'POST', body: JSON.stringify(payload) });
         toast('Item cadastrado!', 'ok');
-
         qs('#cadCode').value = '';
         qs('#cadName').value = '';
         qs('#cadBroto').value = '';
         qs('#cadGrande').value = '';
         qs('#cadPrice').value = '';
-
         await loadAllLists();
-      } catch (e) {
-        toast(e.message || 'Erro ao cadastrar', 'err');
-      }
+      } catch (e) { toast(e.message || 'Erro ao cadastrar', 'err'); }
     }
 
     async function deleteItem(itemId) {
@@ -833,19 +831,13 @@
         await api(`/api/items/${itemId}`, { method:'DELETE' });
         toast('Item excluído!', 'ok');
         await loadAllLists();
-      } catch (e) {
-        toast(e.message || 'Erro ao excluir', 'err');
-      }
+      } catch (e) { toast(e.message || 'Erro ao excluir', 'err'); }
     }
 
     async function buscarAll() {
       const q = qs('#searchAll').value.trim();
       const all = await api(`/api/items?q=${encodeURIComponent(q)}`);
-
-      const pz = all.filter(x => x.type === 'pizza');
-      const bd = all.filter(x => x.type === 'borda');
-      const ot = all.filter(x => x.type === 'outros');
-      renderCadLists(pz, bd, ot);
+      renderCadLists(all.filter(x => x.type === 'pizza'), all.filter(x => x.type === 'borda'), all.filter(x => x.type === 'outros'));
     }
 
     // =============================
@@ -854,63 +846,49 @@
     function setTab(name) {
       qsa('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
       qsa('.tabpanel').forEach(p => p.classList.toggle('active', p.id === `tab-${name}`));
+      if (name === 'caixa') { loadCash().catch(()=>{}); loadSessions().catch(()=>{}); }
+      if (name === 'historico') loadHistory().catch(()=>{});
     }
 
     // =============================
     // EVENTS
     // =============================
     function bindEvents() {
-      // tabs
-      qsa('.tab').forEach(b => b.addEventListener('click', () => {
-        setTab(b.dataset.tab);
-        if (b.dataset.tab === 'historico') loadHistory().catch(() => {});
-      }));
+      qsa('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 
-      // cart buttons
       qs('#cart').addEventListener('click', cartEvents);
 
-      // add by code
       qs('#btnAddByCode').addEventListener('click', addByCode);
-      qs('#codeInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') addByCode();
-      });
+      qs('#codeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addByCode(); });
 
-      // meio a meio
       qs('#btnOpenMeio').addEventListener('click', openMeioModal);
       qs('#closeMeio').addEventListener('click', () => closeMeioModal(true));
       qs('#cancelMeio').addEventListener('click', () => closeMeioModal(true));
-      qs('#modalMeio').addEventListener('click', (e) => {
-        if (e.target.id === 'modalMeio') closeMeioModal(true);
-      });
+      qs('#modalMeio').addEventListener('click', (e) => { if (e.target.id === 'modalMeio') closeMeioModal(true); });
 
-      // salvar pedido / imprimir / limpar
       qs('#btnSalvarPedido').addEventListener('click', salvarPedido);
       qs('#btnImprimir').addEventListener('click', imprimir);
       qs('#btnLimpar').addEventListener('click', () => { cart = []; renderCart(); });
 
-      // reload lists
-      qs('#btnReloadPizzas').addEventListener('click', loadAllLists);
-      qs('#btnReloadBordas').addEventListener('click', loadAllLists);
-      qs('#btnReloadOutros').addEventListener('click', loadAllLists);
-
-      // cadastro type change
       qsa('input[name="cad_type"]').forEach(r => r.addEventListener('change', updateCadFields));
       qs('#btnCadastrar').addEventListener('click', cadastrar);
       qs('#btnRecarregarTudo').addEventListener('click', loadAllLists);
       qs('#btnBuscar').addEventListener('click', buscarAll);
       qs('#searchAll').addEventListener('keydown', (e) => { if (e.key === 'Enter') buscarAll(); });
 
-      // delete on cadastro lists
-      const cadContainer = qs('#tab-cadastro');
-      cadContainer.addEventListener('click', (e) => {
+      qs('#tab-cadastro').addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-del]');
         if (!btn) return;
-        const id = Number(btn.dataset.del);
-        if (!Number.isNaN(id)) deleteItem(id);
+        deleteItem(Number(btn.dataset.del));
       });
 
-      // histórico
       qs('#btnLoadHistory').addEventListener('click', loadHistory);
+
+      // caixa
+      qs('#btnOpenCash').addEventListener('click', openCash);
+      qs('#btnAddMove').addEventListener('click', addMove);
+      qs('#btnCloseCash').addEventListener('click', closeCash);
+      qs('#btnLoadSessions').addEventListener('click', loadSessions);
     }
 
     async function init() {
@@ -918,6 +896,8 @@
       updateCadFields();
       renderCart();
       await loadAllLists();
+      await loadCash();
+      await loadSessions();
       await loadHistory();
       qs('#codeInput').focus();
     }
