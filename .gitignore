@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# DB local
+*.db
+
+# venv
+.venv/
+venv/
